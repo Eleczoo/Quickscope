@@ -23,7 +23,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity axi4lite_counter is
+entity axi4lite_framebuffer is
 	port(
 		s_axi_aclk: in std_logic;
 		s_axi_aresetn: in std_logic;
@@ -46,10 +46,25 @@ entity axi4lite_counter is
 		s_axi_rresp : out std_logic_vector(1 downto 0);
 		s_axi_rvalid : out std_logic;
 		s_axi_rready : in std_logic;
-	);
-end axi4lite_counter;
 
-architecture Behavioral of axi4lite_counter is
+		-- Channels RAM Output for video generator
+		ch_enb			: in std_logic_vector(3 downto 0);
+		-- Channel 0
+		ch0_addrb		: in  std_logic_vector(10 downto 0);
+		ch0_dob			: out std_logic_vector(10 downto 0);
+		-- Channel 0
+		ch1_addrb		: in  std_logic_vector(10 downto 0);
+		ch1_dob			: out std_logic_vector(10 downto 0);
+		-- Channel 0
+		ch2_addrb		: in  std_logic_vector(10 downto 0);
+		ch2_dob			: out std_logic_vector(10 downto 0);
+		-- Channel 0
+		ch3_addrb		: in  std_logic_vector(10 downto 0);
+		ch3_dob			: out std_logic_vector(10 downto 0)
+	);
+end axi4lite_framebuffer;
+
+architecture Behavioral of axi4lite_framebuffer is
 
 	component axi4lite_if
 	  generic (
@@ -89,32 +104,42 @@ architecture Behavioral of axi4lite_counter is
 	  );
 	end component;
 
-	component counter_regs
-    generic (
-        C_DATA_WIDTH : integer;
-        C_ADDR_WIDTH : integer
-    );
-    port (
-        aclk : in std_logic;
-        rst_n : in std_logic;
-        wr_valid_i : in std_logic;
-        wr_addr_i : in std_logic_vector((C_ADDR_WIDTH - 1) downto 0);
-        wr_data_i : in std_logic_vector((C_DATA_WIDTH - 1) downto 0);
-        rd_valid_i : in std_logic;
-        rd_addr_i : in std_logic_vector((C_ADDR_WIDTH - 1) downto 0);
-        rd_data_o : out std_logic_vector((C_DATA_WIDTH - 1) downto 0)
-    );
-    end component;
-	
+	component framebuffer_regs
+		generic (
+			C_DATA_WIDTH : integer;
+			C_ADDR_WIDTH : integer;
+			C_CH_DATA_WIDTH : integer;
+			C_CH_ADDR_WIDTH : integer
+		);
+		port (
+			aclk 		: in std_logic;
+			rst_n 		: in std_logic;
+			wr_valid_i 	: in std_logic;
+			wr_addr_i 	: in std_logic_vector((C_ADDR_WIDTH - 1) downto 0);
+			wr_data_i 	: in std_logic_vector((C_DATA_WIDTH - 1) downto 0);
+			ch_enb 		: in std_logic_vector(3 downto 0);
+			ch0_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+			ch0_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+			ch1_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+			ch1_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+			ch2_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+			ch2_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+			ch3_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+			ch3_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0)
+		);
+	end component;
+
 	constant C_DATA_WIDTH: integer := 32;
-	constant C_ADDR_WIDTH: integer := 4;
+	constant C_ADDR_WIDTH: integer := 13;
+	constant C_CH_DATA_WIDTH: integer := 11;
+	constant C_CH_ADDR_WIDTH: integer := 11;
 	
 	signal wr_valid_s: std_logic;
 	signal wr_addr_s: std_logic_vector(C_ADDR_WIDTH-1 downto 0);
 	signal wr_data_s: std_logic_vector(C_DATA_WIDTH-1 downto 0);
-	signal rd_valid_s: std_logic;
-	signal rd_addr_s: std_logic_vector(C_ADDR_WIDTH-1 downto 0);
-	signal rd_data_s: std_logic_vector(C_DATA_WIDTH-1 downto 0);
+	-- signal rd_valid_s: std_logic;
+	-- signal rd_addr_s: std_logic_vector(C_ADDR_WIDTH-1 downto 0);
+	-- signal rd_data_s: std_logic_vector(C_DATA_WIDTH-1 downto 0);
 	
 begin
 	axi4lite_if_inst : entity work.axi4lite_if
@@ -145,28 +170,36 @@ begin
 		wr_valid_o => wr_valid_s,
 		wr_addr_o => wr_addr_s,
 		wr_data_o => wr_data_s,
-		rd_valid_o => rd_valid_s,
-		rd_addr_o => rd_addr_s,
-		rd_data_i => rd_data_s
+		-- rd_valid_o => rd_valid_s,
+		-- rd_addr_o => rd_addr_s,
+		rd_data_i => (others => '0')
 	);
 	
-    counter_regs_inst : entity work.counter_regs
-    generic map (
-        C_DATA_WIDTH => C_DATA_WIDTH,
-        C_ADDR_WIDTH => C_ADDR_WIDTH
-    )
-    port map (
-        aclk => aclk,
-        rst_n => rst_n,
-        wr_valid_i => wr_valid_s,
-        wr_addr_i => wr_addr_s,
-        wr_data_i => wr_data_s,
-        rd_valid_i => rd_valid_s,
-        rd_addr_i => rd_addr_s,
-        rd_data_o => rd_data_s
-    );
+	framebuffer_regs_inst : entity work.framebuffer_regs
+	generic map (
+		C_DATA_WIDTH => C_DATA_WIDTH,
+		C_ADDR_WIDTH => C_ADDR_WIDTH,
+		C_CH_DATA_WIDTH => C_CH_DATA_WIDTH,
+		C_CH_ADDR_WIDTH => C_CH_ADDR_WIDTH
+	)
+	port map (
+		aclk => s_axi_aclk,
+		rst_n => s_axi_aresetn,
+		wr_valid_i => wr_valid_s,
+		wr_addr_i => wr_addr_s,
+		wr_data_i => wr_data_s,
+		-- Channels
+		ch_enb => ch_enb,
+		ch0_addrb => ch0_addrb,
+		ch0_dob => ch0_dob,
+		ch1_addrb => ch1_addrb,
+		ch1_dob => ch1_dob,
+		ch2_addrb => ch2_addrb,
+		ch2_dob => ch2_dob,
+		ch3_addrb => ch3_addrb,
+		ch3_dob => ch3_dob
+	);
+  
 
-	
-	
 
 end Behavioral;
