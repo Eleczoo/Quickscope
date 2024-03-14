@@ -53,53 +53,54 @@ architecture Behavioral of rotary_encoder is
 begin
 
     -- ! EDGES DETECTION
+    proc_edges : process(clk_i)
+    begin
+        if rising_edge(clk_i) then
+            -- 2 bits register for edge detection
+            s_a(1) <= s_a(0);
+            s_a(0) <= i_a;
+            
+            s_b <= i_b;
+
+            s_button(1) <= s_button(0);
+            s_button(0) <= i_button;
+        end if; 
+    end process;
+
+    -- ! ROTATION SETTER
     proc_rotation : process(clk_i)
     begin
         if rising_edge(clk_i) then
             if resetn = '0' then
                 o_reg_value <= (others => '0'); 
+                o_interrupt <= '0';
             else
-                -- 2 bits register for edge detection
-                s_a(1) <= s_a(0);
-                s_a(0) <= i_a;
-                
-                s_b <= i_b;
+                -- ! Set the rotatation according to B when a is rising
+                if s_a = "01" then  -- A : Rising edge
+                    -- ? ROTATION CANNOT BE BOTH, SO WE SET BOTH AT ONCE
+                    if s_b = '1' then
+                        o_reg_value(1 downto 0) <= "10"; -- LEFT
+                    else
+                        o_reg_value(1 downto 0) <= "01"; -- RIGHT
+                    end if;
+                    o_interrupt <= '1';
 
-                s_button(1) <= s_button(0);
-                s_button(0) <= i_button;
-            end if;
-        end if;
-    end process;
+                end if;
 
-    -- ! CLEAR
-    proc_clear : process
-    begin
-        if rising_edge(clk_i) then
-            if resetn = '0' then
-                o_reg_value <= (others => '0'); 
-            else
+                -- ! CLEAR, should be clocked but we're modifying the register...
                 if i_clear = '1' then 
                     o_reg_value <= (others => '0'); 
                     o_interrupt <= '0'; 
-            end if;
-    end process;
+                end if;
 
-    -- ! ROTATION SETTER
-    proc_rotation : process(s_a, s_b)
-    begin
-        -- ! Set the rotatation according to B when a is rising
-        -- A : Rising edge
-        if s_a = "01" then 
-            o_interrupt <= '1';
-            if s_b = '1' then
-                o_reg_value(1 downto 0) <= "01";
-            elsif s_b = '0' then
-                o_reg_value(1 downto 0) <= "10";
+                if s_button = "10" then
+                    o_reg_value(2) <= '1';
+                end if;
+            
             end if;
-         end if;
-    end process;
+        end if;
 
-    -- ! Set the button pressed bit when falling edge id detected
-    o_reg_value(2) <= '1' when s_button = "10" else '0';
+
+    end process;
     
 end Behavioral;

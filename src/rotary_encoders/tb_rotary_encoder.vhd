@@ -41,16 +41,18 @@ end;
 -- ! ARCHITECTURE
 architecture bench of rotary_encoder_tb is
 
-    signal clk_i : std_logic;
+    signal clk_i : std_logic := '1';
     signal resetn : std_logic;
-    signal i_a : std_logic;
-    signal i_b : std_logic;
+    signal i_a : std_logic := '0';
+    signal i_b : std_logic := '0';
     signal i_button : std_logic;
     signal i_clear : std_logic;
     signal o_interrupt : std_logic;
     signal o_reg_value : std_logic_vector(2 downto 0);
 
     constant CLK_T : time := 10 ns;
+    
+    
 
 begin
 
@@ -75,6 +77,8 @@ begin
     -- ! TESTER
     proc_tester : process
     begin
+
+        -- ! RIGHT ROTATION
         -- Wait for resetted and stable signals
         wait until resetn = '1';
         wait for CLK_T;
@@ -89,8 +93,9 @@ begin
         -- -- Check rotation right when interrupt appears
         if o_interrupt = '0' then
             wait until o_interrupt = '1';
+        end if;
         
-        assert o_reg_value(1 downto 0) = "01" report "Right rotation was no detected" severity failure;
+        assert o_reg_value(1 downto 0) = "01" report "Right rotation was not detected" severity failure;
 
         -- -- Clear
         i_clear <= '1';
@@ -98,6 +103,7 @@ begin
         i_clear <= '0';
         wait for CLK_T;
 
+        -- ! LEFT ROTATION
         -- B High, rising edge A
         i_b <= '1';
         i_a <= '0';
@@ -108,6 +114,7 @@ begin
         -- -- Check rotation left when interrupt appears
         if o_interrupt = '0' then
             wait until o_interrupt = '1';
+        end if;
         
         assert o_reg_value(1 downto 0) = "10" report "Left rotation was no detected" severity failure;     
             
