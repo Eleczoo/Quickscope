@@ -95,6 +95,7 @@ begin
 
                 if s_button = "10" then
                     o_reg_value(2) <= '1';
+                    o_interrupt <= '1';
                 end if;
             
             end if;

@@ -50,9 +50,7 @@ architecture bench of rotary_encoder_tb is
     signal o_interrupt : std_logic;
     signal o_reg_value : std_logic_vector(2 downto 0);
 
-    constant CLK_T : time := 10 ns;
-    
-    
+    constant CLK_T : time := 10 ns; 
 
 begin
 
@@ -78,11 +76,12 @@ begin
     proc_tester : process
     begin
 
-        -- ! RIGHT ROTATION
         -- Wait for resetted and stable signals
         wait until resetn = '1';
         wait for CLK_T;
 
+
+        -- ! RIGHT ROTATION
         -- B low, rising edge A
         i_b <= '0';
         i_a <= '0';
@@ -90,7 +89,7 @@ begin
         i_a <= '1';
         wait for CLK_T;
 
-        -- -- Check rotation right when interrupt appears
+        -- -- Check if interrupt appears
         if o_interrupt = '0' then
             wait until o_interrupt = '1';
         end if;
@@ -111,18 +110,54 @@ begin
         i_a <= '1';
         wait for CLK_T;
         
-        -- -- Check rotation left when interrupt appears
+        -- -- Check if interrupt appears
         if o_interrupt = '0' then
             wait until o_interrupt = '1';
         end if;
         
-        assert o_reg_value(1 downto 0) = "10" report "Left rotation was no detected" severity failure;     
+        assert o_reg_value(1 downto 0) = "10" report "Left rotation was no detected" severity failure;
             
         -- -- Clear
         i_clear <= '1';
         wait for CLK_T;
         i_clear <= '0';
         wait for CLK_T;
+
+        -- ! BUTTON
+        i_button <= '1';
+        wait for CLK_T;
+        i_button <= '0';
+        wait for CLK_T;
+        
+        -- -- Check if interrupt appears
+        if o_interrupt = '0' then
+            wait until o_interrupt = '1';
+        end if;
+
+        assert o_reg_value(2) = '1' report "Button was no detected" severity failure;
+            
+        -- -- Clear
+        i_clear <= '1';
+        wait for CLK_T;
+        i_clear <= '0';
+        wait for CLK_T;
+
+        -- ! SIMULTANUOUS BUTTON + LEFT ROTATION
+        i_button <= '1';
+        i_b <= '1';
+        i_a <= '0';
+        wait for CLK_T;
+        i_a <= '1';
+        i_button <= '0';
+        wait for CLK_T;
+
+        -- -- Check if interrupt appears
+        if o_interrupt = '0' then
+            wait until o_interrupt = '1';
+        end if;
+        
+        assert o_reg_value(1 downto 0) = "10" report "Left rotation was not detected" severity failure;
+        assert o_reg_value(2) = '1' report "Button was no detected" severity failure;
 
         wait for CLK_T; -- Wait before finish
         report "FINISHED SIMULATION";
