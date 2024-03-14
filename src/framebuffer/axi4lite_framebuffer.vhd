@@ -24,14 +24,20 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 entity axi4lite_framebuffer is
+	generic (
+		C_DATA_WIDTH: integer := 32;
+		C_ADDR_WIDTH: integer := 13;
+		C_CH_DATA_WIDTH: integer := 11;
+		C_CH_ADDR_WIDTH: integer := 11
+	);
 	port(
 		s_axi_aclk: in std_logic;
 		s_axi_aresetn: in std_logic;
 		-- AXI4-Lite Write interface
-		s_axi_awaddr : in std_logic_vector(31 downto 0);
+		s_axi_awaddr : in std_logic_vector((C_ADDR_WIDTH-1) downto 0);
 		s_axi_awvalid : in std_logic;
 		s_axi_awready : out std_logic;
-		s_axi_wdata : in std_logic_vector(31 downto 0);
+		s_axi_wdata : in std_logic_vector((C_DATA_WIDTH-1) downto 0);
 		s_axi_wstrb : in std_logic_vector(3 downto 0);
 		s_axi_wvalid : in std_logic;
 		s_axi_wready : out std_logic;
@@ -39,10 +45,10 @@ entity axi4lite_framebuffer is
 		s_axi_bvalid : out std_logic;
 		s_axi_bready : in std_logic;
 		-- AXI4-Lite Read interface
-		s_axi_araddr : in std_logic_vector(31 downto 0);
+		s_axi_araddr : in std_logic_vector((C_ADDR_WIDTH-1) downto 0);
 		s_axi_arvalid : in std_logic;
 		s_axi_arready : out std_logic;
-		s_axi_rdata : out std_logic_vector(31 downto 0);
+		s_axi_rdata : out std_logic_vector((C_DATA_WIDTH-1) downto 0);
 		s_axi_rresp : out std_logic_vector(1 downto 0);
 		s_axi_rvalid : out std_logic;
 		s_axi_rready : in std_logic;
@@ -50,17 +56,17 @@ entity axi4lite_framebuffer is
 		-- Channels RAM Output for video generator
 		ch_enb			: in std_logic_vector(3 downto 0);
 		-- Channel 0
-		ch0_addrb		: in  std_logic_vector(10 downto 0);
-		ch0_dob			: out std_logic_vector(10 downto 0);
+		ch0_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
+		ch0_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
 		-- Channel 0
-		ch1_addrb		: in  std_logic_vector(10 downto 0);
-		ch1_dob			: out std_logic_vector(10 downto 0);
+		ch1_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
+		ch1_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
 		-- Channel 0
-		ch2_addrb		: in  std_logic_vector(10 downto 0);
-		ch2_dob			: out std_logic_vector(10 downto 0);
+		ch2_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
+		ch2_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
 		-- Channel 0
-		ch3_addrb		: in  std_logic_vector(10 downto 0);
-		ch3_dob			: out std_logic_vector(10 downto 0)
+		ch3_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
+		ch3_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0)
 	);
 end axi4lite_framebuffer;
 
@@ -129,10 +135,7 @@ architecture Behavioral of axi4lite_framebuffer is
 		);
 	end component;
 
-	constant C_DATA_WIDTH: integer := 32;
-	constant C_ADDR_WIDTH: integer := 13;
-	constant C_CH_DATA_WIDTH: integer := 11;
-	constant C_CH_ADDR_WIDTH: integer := 11;
+	
 	
 	signal wr_valid_s: std_logic;
 	signal wr_addr_s: std_logic_vector(C_ADDR_WIDTH-1 downto 0);
