@@ -120,14 +120,15 @@ begin
 		if rising_edge(pxlclk) then
 			-- Display signals
 			if (hcount_i >= 110 and hcount_i <= 1810) and (vcount_i >= 140 and vcount_i <= 940) then
+				ch_enb <= (others => '1');
 				if to_integer(unsigned(ch0_dob)) = vcount_i then
 					vdata <= x"FF0000";
 				elsif to_integer(unsigned(ch1_dob)) = vcount_i then
 					vdata <= x"00FF00";
-				elsif to_integer(unsigned(ch2_dob)) = vcount_i then
-					vdata <= x"0000FF";
-				elsif to_integer(unsigned(ch3_dob)) = vcount_i then
-					vdata <= x"FFFF00";
+				-- elsif to_integer(unsigned(ch2_dob)) = vcount_i then
+				-- 	vdata <= x"0000FF";
+				-- elsif to_integer(unsigned(ch3_dob)) = vcount_i then
+				-- 	vdata <= x"FFFF00";
 				-- problemes de timings -10ns WNS
 				-- elsif (((vcount_i-140) mod 80) = 0) or (((hcount_i-110) mod 170) = 0) then
 				-- 	vdata <= x"808080";
@@ -135,6 +136,7 @@ begin
 					vdata <= x"000000";
 				end if;
 			else
+				ch_enb <= (others => '0');
 				vdata <= x"F0F0F0";
 			end if;	
 		end if;

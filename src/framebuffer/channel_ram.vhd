@@ -13,24 +13,26 @@ entity channel_ram is
 		C_CH_ADDR_WIDTH : integer := 11
 	);
 	port(
-		clk : in std_logic;
+		clka : in std_logic;
+		clkb : in std_logic;
 		ena : in std_logic;
 		enb : in std_logic;
 		wea : in std_logic;
-		addra : in std_logic_vector(C_CH_ADDR_WIDTH downto 0);
-		addrb : in std_logic_vector(C_CH_ADDR_WIDTH downto 0);
-		dia : in std_logic_vector(C_CH_DATA_WIDTH downto 0);
-		dob : out std_logic_vector(C_CH_DATA_WIDTH downto 0)
+		addra : in std_logic_vector(C_CH_ADDR_WIDTH-1 downto 0);
+		addrb : in std_logic_vector(C_CH_ADDR_WIDTH-1 downto 0);
+		dia : in std_logic_vector(C_CH_DATA_WIDTH-1 downto 0);
+		dob : out std_logic_vector(C_CH_DATA_WIDTH-1 downto 0)
 	);
 end channel_ram;
 
 architecture syn of channel_ram is
-	type ram_type is array (2**C_CH_ADDR_WIDTH-1 downto 0) of std_logic_vector(C_CH_DATA_WIDTH downto 0);
+	type ram_type is array (2**C_CH_ADDR_WIDTH-1 downto 0) of std_logic_vector(C_CH_DATA_WIDTH-1 downto 0);
 	shared variable RAM : ram_type;
+
 begin
-	process(clk)
+	process(clka)
 	begin
-		if clk'event and clk = '1' then
+		if clka'event and clka = '1' then
 			if ena = '1' then
 				if wea = '1' then
 					RAM(conv_integer(addra)) := dia;
@@ -39,9 +41,9 @@ begin
 		end if;
 	end process;
 
-	process(clk)
+	process(clkb)
 	begin
-		if clk'event and clk = '1' then
+		if clkb'event and clkb = '1' then
 			if enb = '1' then
 				dob <= RAM(conv_integer(addrb));
 			end if;

@@ -26,7 +26,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity axi4lite_framebuffer is
 	generic (
 		C_DATA_WIDTH: integer := 32;
-		C_ADDR_WIDTH: integer := 13;
+		C_ADDR_WIDTH: integer := 15;
 		C_CH_DATA_WIDTH: integer := 11;
 		C_CH_ADDR_WIDTH: integer := 11
 	);
@@ -34,7 +34,7 @@ entity axi4lite_framebuffer is
 		s_axi_aclk: in std_logic;
 		s_axi_aresetn: in std_logic;
 		-- AXI4-Lite Write interface
-		s_axi_awaddr : in std_logic_vector((C_ADDR_WIDTH-1) downto 0);
+		s_axi_awaddr : in std_logic_vector(31 downto 0);
 		s_axi_awvalid : in std_logic;
 		s_axi_awready : out std_logic;
 		s_axi_wdata : in std_logic_vector((C_DATA_WIDTH-1) downto 0);
@@ -45,7 +45,7 @@ entity axi4lite_framebuffer is
 		s_axi_bvalid : out std_logic;
 		s_axi_bready : in std_logic;
 		-- AXI4-Lite Read interface
-		s_axi_araddr : in std_logic_vector((C_ADDR_WIDTH-1) downto 0);
+		s_axi_araddr : in std_logic_vector(31 downto 0);
 		s_axi_arvalid : in std_logic;
 		s_axi_arready : out std_logic;
 		s_axi_rdata : out std_logic_vector((C_DATA_WIDTH-1) downto 0);
@@ -54,6 +54,7 @@ entity axi4lite_framebuffer is
 		s_axi_rready : in std_logic;
 
 		-- Channels RAM Output for video generator
+		pxlclk			: in std_logic;
 		ch_enb			: in std_logic_vector(3 downto 0);
 		-- Channel 0
 		ch0_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
@@ -119,6 +120,7 @@ architecture Behavioral of axi4lite_framebuffer is
 		);
 		port (
 			aclk 		: in std_logic;
+			pxlclk 		: in std_logic;
 			rst_n 		: in std_logic;
 			wr_valid_i 	: in std_logic;
 			wr_addr_i 	: in std_logic_vector((C_ADDR_WIDTH - 1) downto 0);
@@ -187,6 +189,7 @@ begin
 	)
 	port map (
 		aclk => s_axi_aclk,
+		pxlclk => pxlclk,
 		rst_n => s_axi_aresetn,
 		wr_valid_i => wr_valid_s,
 		wr_addr_i => wr_addr_s,
