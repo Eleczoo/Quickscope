@@ -41,7 +41,7 @@ entity rotary_encoder is
         i_button    : in std_logic; -- Rotary encode button
         i_clear     : in std_logic; -- Clear the register and interrupt
         o_interrupt : out std_logic; -- Interrupt telling us there is new rotation
-        o_reg_value : out std_logic_vector(2 downto 0)
+        o_reg_value : out std_logic_vector(31 downto 0) -- Register containing the rotary encoder state (Left right button)
 
         );
     end rotary_encoder;

@@ -69,7 +69,7 @@ entity axi4lite_rotary is
     o_interrupt : out std_logic;    -- Interrupt
     i_a         : in std_logic;     -- Quadrature A
     i_b         : in std_logic;     -- Quadrature B
-    i_button    : in std_logic;     -- Rotary encode button
+    i_button    : in std_logic     -- Rotary encode button
 
     
     );
@@ -82,13 +82,19 @@ architecture Behavioral of axi4lite_rotary is
 -- COMMON SIGNALS
 -----------------------------------------
 
+constant C_DATA_WIDTH : integer := 32;
+constant C_ADDR_WIDTH : integer := 4;
+
 signal wr_valid_s : std_logic;
 signal wr_addr_s : std_logic_vector(3 downto 0);
-signal wr_data_s : std_logic_vector(31 downto 0);
+signal wr_data_s : std_logic_vector(C_DATA_WIDTH - 1 downto 0);
 
 signal rd_valid_s : std_logic;
 signal rd_addr_s : std_logic_vector(3 downto 0);
-signal rd_data_s : std_logic_vector(31 downto 0);
+signal rd_data_s : std_logic_vector(C_DATA_WIDTH - 1 downto 0);
+
+signal clear_s : std_logic;
+signal reg_value_s : std_logic_vector(C_DATA_WIDTH - 1 downto 0);
 
 
 begin
@@ -109,9 +115,9 @@ begin
         wr_data_i => wr_data_s,
         rd_valid_i => rd_valid_s,
         rd_addr_i => rd_addr_s,
-        rd_data_o => rd_data_o,
-        o_clear => o_clear,
-        i_reg_value => o_reg_value
+        rd_data_o => rd_data_s, -- NOT SURE
+        o_clear => clear_s,     -- NOT SURE
+        i_reg_value => reg_value_s -- NOT SURE
     );
 
     -----------------------------------------
@@ -124,9 +130,9 @@ begin
         i_a => i_a,
         i_b => i_b,
         i_button => i_button,
-        i_clear => o_clear,
+        i_clear => clear_s,
         o_interrupt => o_interrupt,
-        o_reg_value => o_reg_value
+        o_reg_value => reg_value_s
     );
 
 

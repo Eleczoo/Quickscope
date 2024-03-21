@@ -58,7 +58,7 @@ entity rotary_regs is
             
         -- ROTARY SPECIFIC
         o_clear     : out std_logic; -- Clear the register and interrupt
-        i_reg_value : in  std_logic_vector(2 downto 0)
+        i_reg_value : in  std_logic_vector(31 downto 0)
     );
 end rotary_regs;
 
@@ -155,7 +155,7 @@ begin
     o_clear <= control_reg(0);
 
     --  Status Register
-    status_reg(2 downto 0) <= i_reg_value;
+    status_reg(2 downto 0) <= i_reg_value(2 downto 0);
 
 
 
