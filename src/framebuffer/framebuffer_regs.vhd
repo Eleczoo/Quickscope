@@ -7,9 +7,11 @@ use ieee.numeric_std.all;
 entity framebuffer_regs is
 	generic (
 		C_DATA_WIDTH : integer := 32;
-		C_ADDR_WIDTH : integer := 15;
+		C_ADDR_WIDTH : integer := 17;
 		C_CH_DATA_WIDTH : integer := 11;
-		C_CH_ADDR_WIDTH : integer := 11
+		C_CH_ADDR_WIDTH : integer := 11;
+		C_ASSETS_DATA_WIDTH : integer := 1;
+		C_ASSETS_ADDR_WIDTH : integer := 14
 	);
 	port (
 		aclk: 	in 	std_logic;
@@ -24,18 +26,22 @@ entity framebuffer_regs is
 
 		-- Channels RAM Output for video generator
 		ch_enb			: in std_logic_vector(3 downto 0);
+		assets_enb		: in std_logic;
 		-- Channel 0
 		ch0_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
 		ch0_dob			: out std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
-		-- Channel 0
+		-- Channel 1
 		ch1_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
 		ch1_dob			: out std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
-		-- Channel 0
+		-- Channel 2
 		ch2_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
 		ch2_dob			: out std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
-		-- Channel 0
+		-- Channel 3
 		ch3_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
-		ch3_dob			: out std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0)
+		ch3_dob			: out std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+		-- Assets
+		assets_addrb	: in  std_logic_vector((C_ASSETS_ADDR_WIDTH - 1) downto 0);
+		assets_dob		: out std_logic_vector((C_ASSETS_DATA_WIDTH - 1) downto 0)
 	);
 
 end entity framebuffer_regs;
@@ -59,11 +65,17 @@ architecture rtl of framebuffer_regs is
 	signal ch3_addra: std_logic_vector(C_CH_ADDR_WIDTH-1 downto 0);
 	signal ch3_dia: std_logic_vector(C_CH_DATA_WIDTH-1 downto 0);
 
+	-- Assets RAM
+	signal assets_wea: 	 std_logic;
+	signal assets_addra: std_logic_vector(C_ASSETS_ADDR_WIDTH-1 downto 0);
+	signal assets_dia: 	 std_logic_vector(C_ASSETS_DATA_WIDTH-1 downto 0);
+
 	-- AXI4-Lite
 	constant CH0_BASEADDR : integer :=    0; -- Channel 1 Data Register
 	constant CH1_BASEADDR : integer := 2048; -- Channel 2 Data Register
 	constant CH2_BASEADDR : integer := 4096; -- Channel 3 Data Register
 	constant CH3_BASEADDR : integer := 6144; -- Channel 4 Data Register
+	constant ASSETS_BASEADDR : integer := 8192; -- Assets Data Register
 
 	-- Write address integer
 	signal wr_addr_s : integer := 0;
@@ -141,7 +153,22 @@ begin
 		dob => ch3_dob
 	);
 
-	
+	inst_assets_ram : entity work.channel_ram
+	generic map (
+		C_CH_DATA_WIDTH => C_ASSETS_DATA_WIDTH,
+		C_CH_ADDR_WIDTH => C_ASSETS_ADDR_WIDTH
+	)
+	port map (
+		clka => aclk,
+		clkb => pxlclk,
+		ena => assets_wea,
+		wea => assets_wea,
+		enb => assets_enb,
+		addra => assets_addra,
+		addrb => assets_addrb,
+		dia => assets_dia,
+		dob => assets_dob
+	);
 
 
 
@@ -157,7 +184,10 @@ begin
 			if rst_n = '0' then
 				ch_wea <= (others => '0');
 			else
+				assets_wea <= '0';
+				ch_wea <= (others => '0');
 				if wr_valid_i = '1' then
+					
 					case wr_addr_s is
 						-- Channels
 						when CH0_BASEADDR to CH0_BASEADDR+2047 =>
@@ -179,6 +209,11 @@ begin
 							ch_wea <= (3 => '1', others => '0');
 							ch3_addra <= std_logic_vector(to_unsigned(wr_addr_s - CH3_BASEADDR, C_CH_ADDR_WIDTH));
 							ch3_dia <= wr_data_i(10 downto 0);
+						
+						when ASSETS_BASEADDR to ASSETS_BASEADDR+16384 =>
+							assets_wea <= '1';
+							assets_addra <= std_logic_vector(to_unsigned(wr_addr_s - ASSETS_BASEADDR, C_ASSETS_ADDR_WIDTH));
+							assets_dia <= wr_data_i(0 downto 0);
 
 						when others =>
 							ch_wea <= (others => '0');

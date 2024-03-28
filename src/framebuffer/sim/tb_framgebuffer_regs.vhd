@@ -196,7 +196,7 @@ architecture bench of tb_framebuffer_regs is
 	constant clk_period2 : time := 5 ns;
 	-- Generics
 	constant C_DATA_WIDTH : integer := 32;
-	constant C_ADDR_WIDTH : integer := 15;
+	constant C_ADDR_WIDTH : integer := 17;
 	constant C_CH_DATA_WIDTH : integer := 11;
 	constant C_CH_ADDR_WIDTH : integer := 11;
 
@@ -204,6 +204,7 @@ architecture bench of tb_framebuffer_regs is
 	constant CH1_BASEADDR : integer := 2048; -- Channel 2 Data Register
 	constant CH2_BASEADDR : integer := 4096; -- Channel 3 Data Register
 	constant CH3_BASEADDR : integer := 6144; -- Channel 4 Data Register
+	constant ASSETS_BASEADDR : integer := 8192; -- Assets Data Register
 	-- Ports
 	signal aclk : std_logic := '1';
 	signal pxlclk : std_logic := '1';
@@ -220,6 +221,9 @@ architecture bench of tb_framebuffer_regs is
 	signal ch2_dob : std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
 	signal ch3_addrb : std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0) := (others => '0');
 	signal ch3_dob : std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+	signal assets_enb: std_logic;
+	signal assets_addrb: std_logic_vector((14 - 1) downto 0);
+	signal assets_dob: std_logic_vector((1 - 1) downto 0);
 begin
 
 	framebuffer_regs_inst : entity work.framebuffer_regs
@@ -227,7 +231,9 @@ begin
 		C_DATA_WIDTH => C_DATA_WIDTH,
 		C_ADDR_WIDTH => C_ADDR_WIDTH,
 		C_CH_DATA_WIDTH => C_CH_DATA_WIDTH,
-		C_CH_ADDR_WIDTH => C_CH_ADDR_WIDTH
+		C_CH_ADDR_WIDTH => C_CH_ADDR_WIDTH,
+		c_ASSETS_DATA_WIDTH => 1,
+		c_ASSETS_ADDR_WIDTH => 14
 	)
 	port map (
 		aclk => aclk,
@@ -236,7 +242,9 @@ begin
 		wr_valid_i => wr_valid_i,
 		wr_addr_i => wr_addr_i,
 		wr_data_i => wr_data_i,
+		-- Channels
 		ch_enb => ch_enb,
+		assets_enb => assets_enb,
 		ch0_addrb => ch0_addrb,
 		ch0_dob => ch0_dob,
 		ch1_addrb => ch1_addrb,
@@ -244,7 +252,9 @@ begin
 		ch2_addrb => ch2_addrb,
 		ch2_dob => ch2_dob,
 		ch3_addrb => ch3_addrb,
-		ch3_dob => ch3_dob
+		ch3_dob => ch3_dob,
+		assets_addrb => assets_addrb,
+		assets_dob => assets_dob
 	);
 
 	aclk <= not aclk after clk_period/2;
@@ -301,7 +311,28 @@ begin
 		wait for clk_period;
 		wr_valid_i <= '0';
 
+	
+		wait for clk_period * 5;
+		
+		
+		wr_addr_i <= std_logic_vector(to_unsigned(ASSETS_BASEADDR*4, C_ADDR_WIDTH));
+		wr_data_i <= x"00000000";
+		wait for clk_period;
+		wr_valid_i <= '1';
+		wait for clk_period;
+		wr_valid_i <= '0';
 
+		wait for clk_period * 5;
+		
+		
+		wr_addr_i <= std_logic_vector(to_unsigned(ASSETS_BASEADDR*4 + 4, C_ADDR_WIDTH));
+		wr_data_i <= x"00000001";
+		wait for clk_period;
+		wr_valid_i <= '1';
+		wait for clk_period;
+		wr_valid_i <= '0';
+
+		wr_addr_i <= (others => '1');
 
 
 		wait;
@@ -313,8 +344,10 @@ begin
 		wait until rst_n = '1';
 
 		ch_enb <= "1111";
+		assets_enb <= '1';
 		wait for clk_period * 100;
 
+		-- Channel 0
 		ch0_addrb <= std_logic_vector(to_unsigned(0, 11));
 		wait for clk_period;
 		assert ch0_dob = std_logic_vector(to_unsigned(5, 11)) report "ch0 addr 0, wrong data" severity failure;
@@ -328,6 +361,7 @@ begin
 			
 		wait for clk_period * 5;
 
+		-- Channel 1
 		ch1_addrb <= std_logic_vector(to_unsigned(0, 11));
 		wait for clk_period;
 		assert ch1_dob = std_logic_vector(to_unsigned(2, 11)) report "ch1 addr 0, wrong data" severity failure;
@@ -338,6 +372,21 @@ begin
 		ch1_addrb <= std_logic_vector(to_unsigned(1, 11));
 		wait for clk_period;
 		assert ch1_dob = std_logic_vector(to_unsigned(3, 11)) report "ch1 addr 1, wrong data" severity failure;
+				
+			
+		wait for clk_period * 5;
+
+		-- ASSETS
+		assets_addrb <= std_logic_vector(to_unsigned(0, 14));
+		wait for clk_period;
+		assert assets_dob = std_logic_vector(to_unsigned(0, 1)) report "assets addr 0, wrong data" severity failure;
+		
+			
+		wait for clk_period * 5;
+
+		assets_addrb <= std_logic_vector(to_unsigned(1, 14));
+		wait for clk_period;
+		assert assets_dob = std_logic_vector(to_unsigned(1, 1)) report "assets addr 1, wrong data" severity failure;
 		
 		report "--- Test Done ---";
 		finish;

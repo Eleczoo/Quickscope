@@ -26,9 +26,11 @@ use IEEE.NUMERIC_STD.ALL;
 entity axi4lite_framebuffer is
 	generic (
 		C_DATA_WIDTH: integer := 32;
-		C_ADDR_WIDTH: integer := 15;
+		C_ADDR_WIDTH: integer := 17;
 		C_CH_DATA_WIDTH: integer := 11;
-		C_CH_ADDR_WIDTH: integer := 11
+		C_CH_ADDR_WIDTH: integer := 11;
+		C_ASSETS_DATA_WIDTH : integer := 1;
+		C_ASSETS_ADDR_WIDTH : integer := 14
 	);
 	port(
 		s_axi_aclk: in std_logic;
@@ -56,18 +58,22 @@ entity axi4lite_framebuffer is
 		-- Channels RAM Output for video generator
 		pxlclk			: in std_logic;
 		ch_enb			: in std_logic_vector(3 downto 0);
+		assets_enb		: in std_logic;
 		-- Channel 0
 		ch0_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
 		ch0_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
+		-- Channel 1
 		ch1_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
 		ch1_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
+		-- Channel 2
 		ch2_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
 		ch2_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
+		-- Channel 3
 		ch3_addrb		: in  std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
-		ch3_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0)
+		ch3_dob			: out std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
+		-- Assets
+		assets_addrb	: in  std_logic_vector((C_ASSETS_ADDR_WIDTH - 1) downto 0);
+		assets_dob		: out std_logic_vector((C_ASSETS_DATA_WIDTH - 1) downto 0)
 	);
 end axi4lite_framebuffer;
 
@@ -116,7 +122,9 @@ architecture Behavioral of axi4lite_framebuffer is
 			C_DATA_WIDTH : integer;
 			C_ADDR_WIDTH : integer;
 			C_CH_DATA_WIDTH : integer;
-			C_CH_ADDR_WIDTH : integer
+			C_CH_ADDR_WIDTH : integer;
+			C_ASSETS_DATA_WIDTH : integer;
+			C_ASSETS_ADDR_WIDTH : integer
 		);
 		port (
 			aclk 		: in std_logic;
@@ -126,6 +134,7 @@ architecture Behavioral of axi4lite_framebuffer is
 			wr_addr_i 	: in std_logic_vector((C_ADDR_WIDTH - 1) downto 0);
 			wr_data_i 	: in std_logic_vector((C_DATA_WIDTH - 1) downto 0);
 			ch_enb 		: in std_logic_vector(3 downto 0);
+			assets_enb	: in std_logic;
 			ch0_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
 			ch0_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
 			ch1_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
@@ -133,7 +142,9 @@ architecture Behavioral of axi4lite_framebuffer is
 			ch2_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
 			ch2_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
 			ch3_addrb 	: in std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
-			ch3_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0)
+			ch3_dob 	: in std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+			assets_addrb: in  std_logic_vector((C_ASSETS_ADDR_WIDTH - 1) downto 0);
+			assets_dob	: out std_logic_vector((C_ASSETS_DATA_WIDTH - 1) downto 0)
 		);
 	end component;
 
@@ -196,6 +207,7 @@ begin
 		wr_data_i => wr_data_s,
 		-- Channels
 		ch_enb => ch_enb,
+		assets_enb => assets_enb,
 		ch0_addrb => ch0_addrb,
 		ch0_dob => ch0_dob,
 		ch1_addrb => ch1_addrb,
@@ -203,7 +215,9 @@ begin
 		ch2_addrb => ch2_addrb,
 		ch2_dob => ch2_dob,
 		ch3_addrb => ch3_addrb,
-		ch3_dob => ch3_dob
+		ch3_dob => ch3_dob,
+		assets_addrb => assets_addrb,
+		assets_dob => assets_dob
 	);
   
 

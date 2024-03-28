@@ -9,7 +9,9 @@ use ieee.numeric_std.all;
 entity video_generator is
 	generic (
 		C_CH_DATA_WIDTH: integer := 11;
-		C_CH_ADDR_WIDTH: integer := 11
+		C_CH_ADDR_WIDTH: integer := 11;
+		C_ASSETS_DATA_WIDTH : integer := 1;
+		C_ASSETS_ADDR_WIDTH : integer := 14
 	);
 	port (
 		pxlclk  : in std_logic;
@@ -17,18 +19,22 @@ entity video_generator is
 
 		-- Channels RAM Output for video generator
 		ch_enb			: out std_logic_vector(3 downto 0);
+		assets_enb		: out std_logic;
 		-- Channel 0
-		ch0_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
-		ch0_dob			: in  std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
-		ch1_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
-		ch1_dob			: in  std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
-		ch2_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
-		ch2_dob			: in  std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
-		-- Channel 0
-		ch3_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH-1) downto 0);
-		ch3_dob			: in  std_logic_vector((C_CH_DATA_WIDTH-1) downto 0);
+		ch0_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+		ch0_dob			: in  std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+		-- Channel 1
+		ch1_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+		ch1_dob			: in  std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+		-- Channel 2
+		ch2_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+		ch2_dob			: in  std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+		-- Channel 3
+		ch3_addrb		: out std_logic_vector((C_CH_ADDR_WIDTH - 1) downto 0);
+		ch3_dob			: in  std_logic_vector((C_CH_DATA_WIDTH - 1) downto 0);
+		-- Assets
+		assets_addrb	: out std_logic_vector((C_ASSETS_ADDR_WIDTH - 1) downto 0);
+		assets_dob		: in  std_logic_vector((C_ASSETS_DATA_WIDTH - 1) downto 0);
 
 		-- Video out
 		hsync	: out std_logic;
@@ -76,6 +82,8 @@ architecture rtl of video_generator is
 
 	signal rst: std_logic;
 
+	signal assets_counter: unsigned((C_ASSETS_ADDR_WIDTH - 1) downto 0);
+
 begin
 
 	rst <= not rst_n;
@@ -118,27 +126,52 @@ begin
 	process (pxlclk)
 	begin
 		if rising_edge(pxlclk) then
-			-- Display signals
-			if (hcount_i >= 110 and hcount_i <= 1810) and (vcount_i >= 140 and vcount_i <= 940) then
-				ch_enb <= (others => '1');
-				if to_integer(unsigned(ch0_dob)) = vcount_i then
-					vdata <= x"FF0000";
-				elsif to_integer(unsigned(ch1_dob)) = vcount_i then
-					vdata <= x"00FF00";
-				-- elsif to_integer(unsigned(ch2_dob)) = vcount_i then
-				-- 	vdata <= x"0000FF";
-				-- elsif to_integer(unsigned(ch3_dob)) = vcount_i then
-				-- 	vdata <= x"FFFF00";
-				-- problemes de timings -10ns WNS
-				-- elsif (((vcount_i-140) mod 80) = 0) or (((hcount_i-110) mod 170) = 0) then
-				-- 	vdata <= x"808080";
-				else
-					vdata <= x"000000";
-				end if;
+			if rst_n = '0' then
+				assets_counter <= (others => '0');
 			else
 				ch_enb <= (others => '0');
-				vdata <= x"F0F0F0";
-			end if;	
+				assets_enb <= '0';
+
+				if frame = '1' then
+					assets_counter <= (others => '0');
+				else
+					assets_counter <= assets_counter;
+				end if;
+
+				-- Display signals
+				if (hcount_i >= 110 and hcount_i < 1810) and (vcount_i >= 140 and vcount_i < 940) then
+					ch_enb <= (others => '1');
+					if to_integer(unsigned(ch0_dob)) = vcount_i then
+						vdata <= x"FF0000";
+					elsif to_integer(unsigned(ch1_dob)) = vcount_i then
+						vdata <= x"00FF00";
+					-- elsif to_integer(unsigned(ch2_dob)) = vcount_i then
+					-- 	vdata <= x"0000FF";
+					-- elsif to_integer(unsigned(ch3_dob)) = vcount_i then
+					-- 	vdata <= x"FFFF00";
+					-- problemes de timings -10ns WNS
+					-- elsif (((vcount_i-140) mod 80) = 0) or (((hcount_i-110) mod 170) = 0) then
+					-- 	vdata <= x"808080";
+					else
+						vdata <= x"000000";
+					end if;
+				elsif (hcount_i >= 110 and hcount_i < 622) and (vcount_i >= 1000 and vcount_i < 1032) then
+					assets_enb <= '1';
+					assets_counter <= assets_counter + 1;
+					assets_addrb <= std_logic_vector(assets_counter);
+					if assets_dob = "1" then
+						vdata <= (others => '1');
+					else
+						vdata <= (others => '0');
+					end if;
+				else
+					ch_enb <= (others => '0');
+					vdata <= x"F0F0F0";
+				end if;
+
+				
+
+			end if;
 		end if;
 	end process;
 
