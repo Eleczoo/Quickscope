@@ -10,7 +10,6 @@
 // Interrupt controller Instance
 static XIntc interrupt_controller;
 
-
 // This fully setup the interrupt and setup the given interrupt routine.
 int rotary_encoder_interrupt_init(XInterruptHandler handler_routine)
 {

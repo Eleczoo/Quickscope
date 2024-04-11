@@ -1,9 +1,10 @@
 #include <stdint.h>
 #include "xil_printf.h"
+#include "addresses.h"
 
 int main()
 {
-	uint32_t* ddr = (uint32_t*)0x80000000;
+	uint32_t* ddr = (uint32_t*)DDR_BASEADDR;
 
 	for (int x = 0; x < 100; x++)
 	{

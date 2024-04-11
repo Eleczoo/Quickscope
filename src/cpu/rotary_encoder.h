@@ -7,8 +7,8 @@
 #include "xintc.h"
 #include "xil_exception.h"
 #include "xil_printf.h"
+#include "addresses.h"
 
-#define PERIPHERAL_BASEADDR 0x80000000
 
 /*
  * The following constants map to the XPAR parameters created in the
@@ -36,7 +36,7 @@ typedef enum{
     RIGHT,
 }rotation_t;
 
-#define PERIPHERAL ((peripheral_t *) PERIPHERAL_BASEADDR)
+#define PERIPHERAL ((peripheral_t *) ROTARY_BASEADDR)
 
 
 // CONTROL REGISTER

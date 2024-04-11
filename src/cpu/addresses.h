@@ -1,0 +1,6 @@
+#pragma once
+
+
+// BASE ADDRESSES 
+#define ROTARY_BASEADDR 0x80000000
+#define DDR_BASEADDR 0x80000000

@@ -35,10 +35,11 @@ int main()
 }
 
 
-void handler_routine(void *callback_ref)
+void handler_routine_rotary(void *callback_ref)
 {
-	xil_printf("HANDLER GRAHAM\r\n");
-
+	volatile uint32_t val = rotary_read_sr();
 	// Clear the interrupt
 	rotary_write_cr(0xFF);
+
+	xil_printf("%ld\r\n", val);
 }
