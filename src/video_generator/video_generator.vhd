@@ -155,12 +155,12 @@ begin
 					else
 						vdata <= x"000000";
 					end if;
-				elsif (hcount_i >= 110 and hcount_i < 622) and (vcount_i >= 1000 and vcount_i < 1032) then
+				elsif ((hcount_i-2) >= 110 and hcount_i < 622) and (vcount_i >= 1000 and vcount_i < 1032) then
 					assets_enb <= '1';
 					assets_counter <= assets_counter + 1;
 					assets_addrb <= std_logic_vector(assets_counter);
 					if assets_dob = "1" then
-						vdata <= (others => '1');
+						vdata <= x"F0F0F0";
 					else
 						vdata <= (others => '0');
 					end if;
