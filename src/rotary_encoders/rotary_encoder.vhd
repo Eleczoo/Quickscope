@@ -47,10 +47,64 @@ entity rotary_encoder is
     end rotary_encoder;
     
 architecture Behavioral of rotary_encoder is
+        signal s_a_after_deb : std_logic := '0'; -- After debouncing
         signal s_a      : std_logic_vector(1 downto 0) := (others => '0');
+        
+        signal s_b_after_deb : std_logic := '0'; -- After debouncing
         signal s_b      : std_logic := '0';
+        
+        signal s_button_after_deb : std_logic := '0'; -- After debouncing
         signal s_button : std_logic_vector(1 downto 0) := (others => '0');
+
+        signal ff_a : std_logic;
+        signal ff_b : std_logic;
 begin
+
+    
+
+
+    debounce_rot_a : entity work.debounce
+    generic map (
+        count_size => 15
+    )
+    port map (
+        clk => clk_i,
+        i_input => ff_a,
+        o_output => s_a_after_deb,
+        resetn => resetn
+    );
+
+    debounce_rot_b : entity work.debounce
+    generic map (
+        count_size => 2
+    )
+    port map (
+        clk => clk_i,
+        i_input => ff_b,
+        o_output => s_b_after_deb,
+        resetn => resetn
+    );
+    
+    debounce_rot_button : entity work.debounce
+    generic map (
+        count_size => 15
+    )
+    port map (
+        clk => clk_i,
+        i_input => i_button,
+        o_output => s_button_after_deb,
+        resetn => resetn
+    );
+
+
+    -- ! SYNC INPUTS
+    proc_sync : process(clk_i)
+    begin
+        if rising_edge(clk_i) then
+            ff_a <= i_a;
+            ff_b <= i_b;
+        end if; 
+    end process;
 
     -- ! EDGES DETECTION
     proc_edges : process(clk_i)
@@ -58,12 +112,12 @@ begin
         if rising_edge(clk_i) then
             -- 2 bits register for edge detection
             s_a(1) <= s_a(0);
-            s_a(0) <= i_a;
+            s_a(0) <= s_a_after_deb;
             
-            s_b <= i_b;
+            s_b <= s_b_after_deb;
 
             s_button(1) <= s_button(0);
-            s_button(0) <= i_button;
+            s_button(0) <= s_button_after_deb;
         end if; 
     end process;
 
@@ -76,12 +130,12 @@ begin
                 o_interrupt <= '0';
             else
                 -- ! Set the rotatation according to B when a is rising
-                if s_a = "01" then  -- A : Rising edge
-                    -- ? ROTATION CANNOT BE BOTH, SO WE SET BOTH AT ONCE
+                if s_a = "10" then  -- A : Falling edge
+                    -- ? ROTATION CANNOT BE BOTH, SO WE SET BOTH BITS AT ONCE
                     if s_b = '1' then
-                        o_reg_value(1 downto 0) <= "10"; -- LEFT
+                        o_reg_value(1 downto 0) <= "10"; -- RIGHT
                     else
-                        o_reg_value(1 downto 0) <= "01"; -- RIGHT
+                        o_reg_value(1 downto 0) <= "01"; -- LEFT
                     end if;
                     o_interrupt <= '1';
 
@@ -100,8 +154,6 @@ begin
             
             end if;
         end if;
-
-
     end process;
     
 end Behavioral;

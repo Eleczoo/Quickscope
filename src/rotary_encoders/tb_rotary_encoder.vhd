@@ -48,7 +48,7 @@ architecture bench of rotary_encoder_tb is
     signal i_button : std_logic;
     signal i_clear : std_logic;
     signal o_interrupt : std_logic;
-    signal o_reg_value : std_logic_vector(2 downto 0);
+    signal o_reg_value : std_logic_vector(31 downto 0);
 
     constant CLK_T : time := 10 ns; 
 
@@ -95,7 +95,8 @@ begin
         end if;
         
         assert o_reg_value(1 downto 0) = "01" report "Right rotation was not detected" severity failure;
-
+        report "HERE";
+        
         -- -- Clear
         i_clear <= '1';
         wait for CLK_T;
