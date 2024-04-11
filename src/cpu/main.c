@@ -29,6 +29,13 @@
 #include "addresses.h"
 
 
+void handler_routine(void *callback_ref);
+
+// ! ---------- INIT DDR ----------
+uint32_t* ddr = (uint32_t*)DDR_BASEADDR;
+//uint32_t ddr[100];
+
+
 int main()
 {
     // ! --------- INIT ROTARY ---------
@@ -39,16 +46,14 @@ int main()
 		return XST_FAILURE;
 	}
 
-    // ! ---------- INIT DDR ----------
-    uint32_t* ddr = (uint32_t*)DDR_BASEADDR;
+
 
 	while(1)
 	{
-		usleep(500000);
 
-        for(int i = 0; i < 6; i++)
-	    	xil_printf("LAST SIDE : %s", ddr); // DONT DO THIS
-        xil_printf("\r\n");
+		xil_printf("LAST SIDE : %s\r\n", ddr); // DONT DO THIS
+        //usleep(50000);
+
 	}
 
     return 0;
@@ -60,13 +65,16 @@ void handler_routine(void *callback_ref)
 	volatile uint32_t val = rotary_read_sr();
 	rotary_write_cr(0xFF); // CLEAR
 
-    xil_printf("HANDLING ROTARY %d\r\n", val);
+    //xil_printf("HANDLING ROTARY %d\r\n", val);
+
+    char gauche[7] = "GAUCHE";
+    char droite[7] = "DROITE";
 
     if((val & 0b11) == 1)
-    	strncpy(ddr, "GAUCHE", 6);
+    	strncpy((char*)ddr, gauche, 6);
     else if((val & 0b11) == 2)
-    	strncpy(ddr, "DROITE", 6);
+    	strncpy((char*)ddr, droite, 6);
 
-    ddr[6] = '\0';
+    ((char*)ddr)[6] = 0;
 }
 
