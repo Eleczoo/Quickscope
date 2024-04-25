@@ -9,7 +9,6 @@
 
 
 
-
 // This fully setup the interrupt and setup the given interrupt routine.
 int interrupt_init(XIntc* interrupt_controller)
 {

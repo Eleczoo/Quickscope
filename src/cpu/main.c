@@ -23,7 +23,7 @@
 #include "xil_printf.h"
 #include "xparameters.h"
 #include "sleep.h"
-
+#include "stdbool.h"
 // --- 
 #include "rotary_encoder.h"
 #include "adc.h"
@@ -31,29 +31,32 @@
 #include "interrupt.h"
 #include "display.h"
 
-// #define ADC 1
+#define ADC 1
+#define SAMPLING_TIME CHANNEL_SIZE // 10s @40 ksps
 
 
 void handler_routine_rotary(void *callback_ref);
 void handler_routine_adc(void *callback_ref);
 
+uint32_t chan_val = 0;
 
 // ! ---------- INIT DDR ----------
 uint32_t* ddr = (uint32_t*)DDR_BASEADDR;
-//uint32_t ddr[100];
-
+volatile uint32_t index_ddr = 0;
+volatile uint16_t g_count = 0;
 
 
 // Interrupt controller Instance
 static XIntc interrupt_controller;
 
-uint32_t chan;
-uint16_t chan_val;
-volatile uint32_t count = 0;
-
-
 int main()
 {
+
+	display_text(0, "        Time [ms / div]       ");
+	display_text(1, "        Quickscope            ");
+
+	for(int i = 0; i < CHANNEL_SIZE; i++)
+		ddr[i] = 500;
 
 	// ! --------- INIT INTERRUPT ---------
 	interrupt_init(&interrupt_controller);
@@ -83,23 +86,24 @@ int main()
 	// ! --------- INIT EXCEPTION ---------
 	interrupt_init_exception(&interrupt_controller);
 
+
+
+
 	// display_text(1, "                              ");
-	display_text(0, "        Time [ms / div]       ");
-	display_text(1, "        Quickscope            ");
+
 
 	while(1)
 	{
-
-		if((count % 256) == 0)
-		{
-			xil_printf("LAST SIDE : %s | %d | %d | %d\r\n", ddr, chan, chan_val, count); // DONT DO THIS
-		}
-
-
+		draw_signal(ddr);
+		//printf("ADC : %ld\r\n", chan_val & 0xFFF);
+		//usleep(100);
 	}
 
     return 0;
 }
+
+
+
 
 
 void handler_routine_rotary(void* callback_ref)
@@ -108,29 +112,30 @@ void handler_routine_rotary(void* callback_ref)
 	rotary_write_cr(0xFF); // CLEAR
 
     //xil_printf("HANDLING ROTARY %d\r\n", val);
+	switch(val & 0b11)
+	{
+		case LEFT_ROTATION:
+			if(g_count > 0)
+				g_count--;
+			break;
+		case RIGHT_ROTATION:
+			if(g_count < 4095)
+				g_count++;
+			break;
+	}
 
-    char gauche[7] = "GAUCHE";
-    char droite[7] = "DROITE";
+	if((val & 0b100) != 0)
+	{
+		g_count = 500;
+	}
 
-    if((val & 0b11) == 1)
-    	strncpy((char*)ddr, gauche, 6);
-    else if((val & 0b11) == 2)
-    	strncpy((char*)ddr, droite, 6);
-
-    ((char*)ddr)[6] = 0;
+	//ddr[index_ddr++ % CHANNEL_SIZE] = g_count;
+	//ddr[index_ddr++ % CHANNEL_SIZE] = g_count;
 }
 
 void handler_routine_adc(void* callback_ref)
 {
-	//chan = adc_get_channel((XSysMon*)callback_ref);
+	// WRITE SAMPLE IN DDR
 	chan_val = adc_read_channel(0);
-
-	count++;
+	ddr[index_ddr++ % SAMPLING_TIME] = chan_val;
 }
-
-
-// MEMORY SETUP
-// MAX 512 MB
-//
-
-

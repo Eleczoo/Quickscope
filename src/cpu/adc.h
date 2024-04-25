@@ -14,10 +14,7 @@
 
 #define INTC_DEVICE_INT_ID_ADC 1
 
-#define XSM_SEQ_CH_AUX_MASK	XSM_SEQ_CH_AUX00 | \
-				XSM_SEQ_CH_AUX01 | \
-				XSM_SEQ_CH_AUX08 | \
-				XSM_SEQ_CH_AUX09
+#define XSM_SEQ_CH_AUX_MASK	XSM_SEQ_CH_AUX00
 
 int adc_interrupt_init(XInterruptHandler handler_routine,
 				XIntc* interrupt_controller);

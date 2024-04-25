@@ -24,17 +24,15 @@
 #define INTC_DEVICE_INT_ID_ROTARY	  0
 
 
+#define LEFT_ROTATION 2
+#define RIGHT_ROTATION 1
+
 
 // Peripheral register map
 typedef struct{
     volatile uint32_t CR; // Control register
     volatile uint32_t SR; // Status register
 }peripheral_t;
-
-typedef enum{
-    LEFT,
-    RIGHT,
-}rotation_t;
 
 #define PERIPHERAL ((peripheral_t *) ROTARY_BASEADDR)
 

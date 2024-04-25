@@ -3,6 +3,31 @@
 #include "font.h"
 #include <string.h>
 
+
+uint32_t* chan0 = (uint32_t*)VIDEO_CHAN_0 + HORIZONTAL_BORDER;
+
+uint32_t map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+
+// magnitude will be processed in this
+void draw_signal( uint32_t* ddr)
+{
+	for(int i = 0; i < CHANNEL_SIZE; i++)
+	{
+		//uint32_t val = map(ddr[i], 0, 4096, VERTICAL_BORDER, FRAME_HEIGHT + VERTICAL_BORDER);
+		//val = SCREEN_HEIGHT - val;
+
+		uint32_t val = (((ddr[i] & 0xFFF)  * FRAME_HEIGHT) / 4096) + VERTICAL_BORDER;
+		val = SCREEN_HEIGHT - val;
+
+		chan0[i] = val;
+	}
+}
+
+
 void display_char(int pos, int line, char c)
 {
 	int char_index = c - Font16x16[2];
