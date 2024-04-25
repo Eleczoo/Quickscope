@@ -21,7 +21,7 @@
  *  This is the Interrupt Number of the Device whose Interrupt Output is
  *  connected to the Input of the Interrupt Controller
  */
-#define INTC_DEVICE_INT_ID	  0
+#define INTC_DEVICE_INT_ID_ROTARY	  0
 
 
 
@@ -47,4 +47,5 @@ void rotary_write_cr(uint32_t val);
 uint32_t rotary_read_sr(void);
 void rotary_write_sr(uint32_t val);
 
-int rotary_encoder_interrupt_init(XInterruptHandler handler_routine);
+int rotary_encoder_interrupt_init(	XInterruptHandler handler_routine,
+									XIntc* interrupt_controller);

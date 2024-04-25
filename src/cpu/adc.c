@@ -2,11 +2,12 @@
 	XADC Documentation : https://docs.xilinx.com/r/en-US/ug480_7Series_XADC/7-Series-FPGAs-and-Zynq-7000-SoC-XADC-Dual-12-Bit-1-MSPS-Analog-to-Digital-Converter-User-Guide-UG480
 */
 
-#include "xadc.h"
+#include "adc.h"
 
 static XSysMon SysMonInst;      /* System Monitor driver instance */
 
-void setup_xadc()
+int adc_interrupt_init(XInterruptHandler handler_routine,
+						XIntc* interrupt_controller)
 {
 	u16 SysMonDeviceId = XPAR_XADC_WIZ_0_DEVICE_ID;
 	XSysMon_Config *ConfigPtr;
@@ -42,27 +43,51 @@ void setup_xadc()
 	 * Enable the Channel Sequencer in continuous sequencer cycling mode.
 	 */
 	XSysMon_SetSequencerMode(SysMonInstPtr, XSM_SEQ_MODE_CONTINPASS);
+
+
+
+
+	// -----------------------------------
+	// ------ INTERRUPT SETUP -----
+	// -----------------------------------
+
+    // ! SETUP INTERRUPT SYSTEM
+	int status;
+
+    status = XIntc_Connect(interrupt_controller, INTC_DEVICE_INT_ID_ADC,
+				   (XInterruptHandler)handler_routine,
+				   (void*)SysMonInstPtr);
+	if (status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+
+	/*
+	 * Enable the interrupt for the device and then cause (simulate) an
+	 * interrupt so the handlers will be called.
+	 */
+	XIntc_Enable(interrupt_controller, INTC_DEVICE_INT_ID_ADC);
+
+	return XST_SUCCESS;
+
 }
 
-u16 get_adc_aux_raw(u8 aux_channel)
+uint16_t adc_read_channel(u8 channel)
 {
 	u16 VAuxRawData;
 	XSysMon *SysMonInstPtr = &SysMonInst;
 
-	/*
-	 * Wait till the End of Sequence occurs
-	 */
-	XSysMon_GetStatus(SysMonInstPtr); /* Clear the old status */
-	while ((XSysMon_GetStatus(SysMonInstPtr) & XSM_SR_EOS_MASK) !=
-			XSM_SR_EOS_MASK);
-
 	XSysMon_GetStatus(SysMonInstPtr);	/* Clear the latched status */
 
-	/*
-	 * Read the ADC converted Data from the data registers.
-	 */
-	VAuxRawData = XSysMon_GetAdcData(SysMonInstPtr, XSM_CH_AUX_MIN + aux_channel);
+	VAuxRawData = XSysMon_GetAdcData(SysMonInstPtr, XSM_CH_AUX_MIN + channel);
 	return VAuxRawData;
+}
+
+/**
+ * Return the channel that was last converted
+ */
+uint32_t adc_get_channel(XSysMon* callback_ref)
+{
+	return XSysMon_IntrGetStatus(callback_ref);
 }
 
 /* EXAMPLE
