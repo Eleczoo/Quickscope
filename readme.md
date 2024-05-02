@@ -5,3 +5,5 @@ Name: Quickscope
 ---
 
 # Oscilloscope on FPGA
+
+[VIDEO DEMO](docs/IMG_0708.mov)
