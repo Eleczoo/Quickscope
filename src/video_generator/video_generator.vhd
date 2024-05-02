@@ -151,7 +151,8 @@ begin
 					-- 	vdata <= x"FFFF00";
 					-- problemes de timings -10ns WNS
 					-- elsif (((vcount_i-140) mod 80) = 0) or (((hcount_i-110) mod 170) = 0) then
-					-- 	vdata <= x"808080";
+					elsif (((vcount_i-140) mod 80) = 0) then
+						vdata <= x"808080";
 					else
 						vdata <= x"000000";
 					end if;

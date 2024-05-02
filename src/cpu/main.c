@@ -38,13 +38,16 @@
 void handler_routine_rotary(void *callback_ref);
 void handler_routine_adc(void *callback_ref);
 
-uint32_t chan_val = 0;
+volatile uint32_t chan_val = 0;
 
-// ! ---------- INIT DDR ----------
+// // ! ---------- INIT DDR ----------
 uint32_t* ddr = (uint32_t*)DDR_BASEADDR;
 volatile uint32_t index_ddr = 0;
-volatile uint16_t g_count = 0;
 
+// ! ---------- INIT FAGS AND OFFSETS ----------
+volatile uint16_t g_offset_vertical = 4 * 80;
+volatile uint16_t g_offset_horizontal = 0;
+volatile bool g_state_pressed = false;
 
 // Interrupt controller Instance
 static XIntc interrupt_controller;
@@ -52,11 +55,12 @@ static XIntc interrupt_controller;
 int main()
 {
 
-	display_text(0, "        Time [ms / div]       ");
-	display_text(1, "        Quickscope            ");
+	clear_text();
+	display_text(1, "100 mV / div");
 
-	for(int i = 0; i < CHANNEL_SIZE; i++)
-		ddr[i] = 500;
+
+	//for(int i = 0; i < CHANNEL_SIZE; i++)
+	//	ddr[i] = 500;
 
 	// ! --------- INIT INTERRUPT ---------
 	interrupt_init(&interrupt_controller);
@@ -91,11 +95,41 @@ int main()
 
 	// display_text(1, "                              ");
 
-
+	char text[30];
+	uint16_t toggle_step = 0;
+	uint16_t old_vertical_offset = 0;
+	uint16_t old_vertical_offset_display = 0;
+	uint16_t old_horizontal_offset = 0;
+	bool old_pressed = 0;
 	while(1)
 	{
-		draw_signal(ddr);
-		//printf("ADC : %ld\r\n", chan_val & 0xFFF);
+		if(toggle_step++ >= g_offset_horizontal * 5)
+		{
+			toggle_step = 0;
+			chan_val = adc_read_channel(0);
+			ddr[index_ddr++] = chan_val >> 4;
+		}
+
+		if((old_vertical_offset != g_offset_vertical) || (old_horizontal_offset != g_offset_horizontal) || (old_pressed != g_state_pressed))
+		{
+			old_vertical_offset = g_offset_vertical;
+			old_horizontal_offset = g_offset_horizontal;
+			old_pressed = g_state_pressed;
+			sprintf(text, "  %c SCALE : %d", g_state_pressed ? 'V' : 'H', g_state_pressed ? g_offset_vertical  : g_offset_horizontal + 1);
+			display_text(0, text);
+		}
+
+		if((index_ddr == (SAMPLING_TIME)) || (old_vertical_offset_display != g_offset_vertical))
+		{
+			old_vertical_offset_display = g_offset_vertical;
+			index_ddr = 0;
+			draw_signal(ddr, g_offset_vertical);
+		}
+
+
+
+
+		//xil_printf("ADC : %ld | ROTARY = %d      \r", chan_val >> 6, g_count);
 		//usleep(100);
 	}
 
@@ -108,6 +142,8 @@ int main()
 
 void handler_routine_rotary(void* callback_ref)
 {
+
+
 	volatile uint32_t val = rotary_read_sr();
 	rotary_write_cr(0xFF); // CLEAR
 
@@ -115,27 +151,44 @@ void handler_routine_rotary(void* callback_ref)
 	switch(val & 0b11)
 	{
 		case LEFT_ROTATION:
-			if(g_count > 0)
-				g_count--;
+			if(g_state_pressed)
+			{
+				if(g_offset_vertical > 0)
+					g_offset_vertical -= 5;
+			}
+			else
+			{
+				if(g_offset_horizontal > 0)
+					g_offset_horizontal -= 1;
+			}
+
+
 			break;
 		case RIGHT_ROTATION:
-			if(g_count < 4095)
-				g_count++;
+			if(g_state_pressed)
+			{
+				if(g_offset_vertical < 800)
+					g_offset_vertical += 5;
+			}
+			else
+			{
+				if(g_offset_horizontal < 20)
+					g_offset_horizontal += 1;
+			}
 			break;
 	}
 
 	if((val & 0b100) != 0)
-	{
-		g_count = 500;
-	}
+		g_state_pressed = !g_state_pressed;
 
 	//ddr[index_ddr++ % CHANNEL_SIZE] = g_count;
 	//ddr[index_ddr++ % CHANNEL_SIZE] = g_count;
 }
 
+// NOT USED ANYMORE
 void handler_routine_adc(void* callback_ref)
 {
 	// WRITE SAMPLE IN DDR
 	chan_val = adc_read_channel(0);
-	ddr[index_ddr++ % SAMPLING_TIME] = chan_val;
+	ddr[index_ddr++ % SAMPLING_TIME] = chan_val >> 4;
 }

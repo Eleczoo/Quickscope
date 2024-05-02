@@ -50,7 +50,7 @@ int adc_interrupt_init(XInterruptHandler handler_routine,
 	// -----------------------------------
 	// ------ INTERRUPT SETUP -----
 	// -----------------------------------
-
+/*
     // ! SETUP INTERRUPT SYSTEM
 	int status;
 
@@ -61,11 +61,8 @@ int adc_interrupt_init(XInterruptHandler handler_routine,
 		return XST_FAILURE;
 	}
 
-	/*
-	 * Enable the interrupt for the device and then cause (simulate) an
-	 * interrupt so the handlers will be called.
-	 */
 	XIntc_Enable(interrupt_controller, INTC_DEVICE_INT_ID_ADC);
+	 */
 
 	return XST_SUCCESS;
 

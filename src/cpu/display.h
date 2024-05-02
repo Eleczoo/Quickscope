@@ -6,6 +6,8 @@
 // (0x60000000 + 8192*4)
 #define CHANNEL_SIZE 1700
 #define VIDEO_CHAN_0 0x20000000
+#define VIDEO_CHAN_1 (0x20000000 + (2048 * 4))
+
 #define ASSETS_RAM_ADDR 0x20008000
 
 #define FRAME_HEIGHT 800
@@ -20,9 +22,9 @@
 
 
 
-void draw_signal(uint32_t* ddr);
+void draw_signal(uint32_t* ddr, uint16_t offset);
 void display_char(int pos, int line, char c);
 void display_text(int line, char* text);
-
+void clear_text();
 
 #endif
