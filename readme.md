@@ -6,8 +6,8 @@ Name: Quickscope
 
 # Oscilloscope on FPGA
 
-[VIDEO DEMO](docs/IMG_0708.mov)
 
+![Demo gif](docs/demo_small.webp)
 
 
 - `build` : Built elf, bitstream and xsa
@@ -20,3 +20,5 @@ Name: Quickscope
 - `src.rotary_encoder` : Individual rotary_encoder code
 - `src.video_generator` : Individual video_generator code
 
+
+[FULL VIDEO DEMO](docs/IMG_0708.mov)
