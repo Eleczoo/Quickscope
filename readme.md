@@ -6,9 +6,15 @@ Name: Quickscope
 
 # Oscilloscope on FPGA
 
+## Internal diagram
 
+![internal_diagram](docs/internal_diagram.png)
+
+## Demo
 ![Demo gif](docs/demo_small.webp)
 
+
+## Repository organisation 
 
 - `build` : Built elf, bitstream and xsa
 - `docs` : Documentation
